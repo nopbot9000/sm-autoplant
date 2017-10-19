@@ -21,7 +21,7 @@ public Plugin myinfo =
     name = "[Retakes] Bomb Autoplant",
     author = "Techno",
     description = "Autoplant the bomb on round start.",
-    version = "1.2.0",
+    version = "1.3.0",
     url = "https://tech-no.me"
 };
 
