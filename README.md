@@ -1,6 +1,6 @@
 ## Introduction
 
-Autoplanter for Splewis' CS:GO retakes plugin, found here.
+Autoplanter for Splewis' CS:GO retakes plugin, found (here)[https://github.com/splewis/csgo-retakes].
 
 ## Description
 
