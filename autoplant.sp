@@ -64,6 +64,8 @@ public void OnRoundEnd(Event event, const char[] name, bool dontBroadcast)
         KillTimer(bombPlantTimer);
         bombPlantTimer = INVALID_HANDLE;
     }
+
+    GameRules_SetProp("m_bBombPlanted", 0);
 }
 
 public Action PlantBomb(Handle timer, int client)
@@ -79,6 +81,7 @@ public Action PlantBomb(Handle timer, int client)
         {
             int Bomb_Ent = CreateEntityByName("planted_c4");
 
+            GameRules_SetProp("m_bBombPlanted", 1);
             SetEntData(Bomb_Ent, m_bBombTicking, 1, 1, true);
 
             SendBombPlanted(client);
