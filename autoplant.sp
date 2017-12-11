@@ -8,11 +8,13 @@
 
 Bombsite g_iBombsite;
 
-bool g_bBombDel;
+bool gb_bombDel;
 
-ConVar g_FreezeTime;
+ConVar gc_freezeTime;
 
-Handle bombPlantTimer;
+float gf_bombPosition[3];
+
+Handle gh_bombPlantTimer;
 
 int m_bBombTicking;
 
@@ -27,7 +29,7 @@ public Plugin myinfo =
 
 public void OnPluginStart()
 {
-    g_FreezeTime = FindConVar("mp_freezetime");
+    gc_freezeTime = FindConVar("mp_freezetime");
 
     m_bBombTicking = FindSendPropInfo("CPlantedC4", "m_bBombTicking");
 
@@ -37,47 +39,39 @@ public void OnPluginStart()
 
 public void OnRoundStart(Event event, const char[] name, bool dontBroadcast)
 {
-    g_bBombDel = false;
+    gb_bombDel = false;
 
     for (int client = 1; client <= MaxClients; client++)
     {
         if (IsClientInGame(client) && IsPlayerAlive(client) && GetPlayerWeaponSlot(client, 4) > 0)
         {
             int iBomb = GetPlayerWeaponSlot(client, 4);
-            g_bBombDel = SafeRemoveWeapon(client, iBomb);
 
-            if (bombPlantTimer != INVALID_HANDLE)
-            {
-                KillTimer(bombPlantTimer);
-                bombPlantTimer = INVALID_HANDLE;
-            }
+            gb_bombDel = SafeRemoveWeapon(client, iBomb);
 
-            bombPlantTimer = CreateTimer(GetConVarFloat(g_FreezeTime), PlantBomb, client);
+            GetClientAbsOrigin(client, gf_bombPosition);
+
+            delete gh_bombPlantTimer;
+
+            gh_bombPlantTimer = CreateTimer(gc_freezeTime.FloatValue, PlantBomb, client);
         }
     }
 }
 
 public void OnRoundEnd(Event event, const char[] name, bool dontBroadcast)
 {
-    if (bombPlantTimer != INVALID_HANDLE)
-    {
-        KillTimer(bombPlantTimer);
-        bombPlantTimer = INVALID_HANDLE;
-    }
+    delete gh_bombPlantTimer;
 
     GameRules_SetProp("m_bBombPlanted", 0);
 }
 
 public Action PlantBomb(Handle timer, int client)
 {
-    bombPlantTimer = INVALID_HANDLE;
+    gh_bombPlantTimer = INVALID_HANDLE;
 
     if (IsClientInGame(client))
     {
-        float vectors[3];
-        GetClientAbsOrigin(client, vectors);
-
-        if (g_bBombDel)
+        if (gb_bombDel)
         {
             int Bomb_Ent = CreateEntityByName("planted_c4");
 
@@ -89,7 +83,7 @@ public Action PlantBomb(Handle timer, int client)
             if (DispatchSpawn(Bomb_Ent))
             {
                 ActivateEntity(Bomb_Ent);
-                TeleportEntity(Bomb_Ent, vectors, NULL_VECTOR, NULL_VECTOR);
+                TeleportEntity(Bomb_Ent, gf_bombPosition, NULL_VECTOR, NULL_VECTOR);
             }
         }
     }
