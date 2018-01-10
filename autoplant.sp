@@ -10,6 +10,7 @@ Bombsite g_iBombsite;
 
 bool gb_bombDel;
 
+ConVar gc_enabled;
 ConVar gc_freezeTime;
 
 float gf_bombPosition[3];
@@ -29,6 +30,8 @@ public Plugin myinfo =
 
 public void OnPluginStart()
 {
+    gc_enabled = CreateConVar("sm_autoplant_enabled", "1", "Whether or not the autoplanter is enabled/disabled", _, true, 0.0, true, 1.0);
+
     gc_freezeTime = FindConVar("mp_freezetime");
 
     m_bBombTicking = FindSendPropInfo("CPlantedC4", "m_bBombTicking");
@@ -37,9 +40,14 @@ public void OnPluginStart()
     HookEvent("round_end", OnRoundEnd, EventHookMode_PostNoCopy);
 }
 
-public void OnRoundStart(Event event, const char[] name, bool dontBroadcast)
+public Action OnRoundStart(Event event, const char[] name, bool dontBroadcast)
 {
     gb_bombDel = false;
+
+    if (!gc_enabled.BoolValue)
+    {
+        return Plugin_Continue;
+    }
 
     for (int client = 1; client <= MaxClients; client++)
     {
@@ -56,6 +64,8 @@ public void OnRoundStart(Event event, const char[] name, bool dontBroadcast)
             gh_bombPlantTimer = CreateTimer(gc_freezeTime.FloatValue, PlantBomb, client);
         }
     }
+
+    return Plugin_Continue;
 }
 
 public void OnRoundEnd(Event event, const char[] name, bool dontBroadcast)
