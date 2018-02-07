@@ -79,7 +79,7 @@ public Action PlantBomb(Handle timer, int client)
 {
     gh_bombPlantTimer = INVALID_HANDLE;
 
-    if (IsClientInGame(client))
+    if (IsClientInGame(client) || !gb_bombDel)
     {
         if (gb_bombDel)
         {
