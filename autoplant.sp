@@ -8,14 +8,14 @@
 
 Bombsite g_iBombsite;
 
-bool gb_bombDel;
+bool g_bBombDeleted;
 
-ConVar gc_enabled;
-ConVar gc_freezeTime;
+ConVar g_cEnabled;
+ConVar g_cFreezeTime;
 
-float gf_bombPosition[3];
+float g_fBombPosition[3];
 
-Handle gh_bombPlantTimer;
+Handle g_hBombTimer;
 
 int m_bBombTicking;
 
@@ -30,9 +30,9 @@ public Plugin myinfo =
 
 public void OnPluginStart()
 {
-    gc_enabled = CreateConVar("sm_autoplant_enabled", "1", "Whether or not the autoplanter is enabled/disabled", _, true, 0.0, true, 1.0);
+    g_cEnabled = CreateConVar("sm_autoplant_enabled", "1", "Whether or not the autoplanter is enabled/disabled", _, true, 0.0, true, 1.0);
 
-    gc_freezeTime = FindConVar("mp_freezetime");
+    g_cFreezeTime = FindConVar("mp_freezetime");
 
     m_bBombTicking = FindSendPropInfo("CPlantedC4", "m_bBombTicking");
 
@@ -40,60 +40,61 @@ public void OnPluginStart()
     HookEvent("round_end", OnRoundEnd, EventHookMode_PostNoCopy);
 }
 
-public Action OnRoundStart(Event event, const char[] name, bool dontBroadcast)
+public Action OnRoundStart(Event eEvent, const char[] sName, bool bDontBroadcast)
 {
-    gb_bombDel = false;
+    g_bBombDeleted = false;
 
-    if (!gc_enabled.BoolValue)
+    if (!g_cEnabled.BoolValue)
     {
         return Plugin_Continue;
     }
 
-    for (int client = 1; client <= MaxClients; client++)
+    for (int i = 1; i <= MaxClients; i++)
     {
-        if (IsClientInGame(client) && IsPlayerAlive(client) && GetPlayerWeaponSlot(client, 4) > 0)
+        if (IsClientInGame(i) && IsPlayerAlive(i) && GetPlayerWeaponSlot(i, 4) > 0)
         {
-            int iBomb = GetPlayerWeaponSlot(client, 4);
+            int iBomb = GetPlayerWeaponSlot(i, 4);
 
-            gb_bombDel = SafeRemoveWeapon(client, iBomb);
+            g_bBombDeleted = SafeRemoveWeapon(i, iBomb);
 
-            GetClientAbsOrigin(client, gf_bombPosition);
+            GetClientAbsOrigin(i, g_fBombPosition);
 
-            delete gh_bombPlantTimer;
+            delete g_hBombTimer;
 
-            gh_bombPlantTimer = CreateTimer(gc_freezeTime.FloatValue, PlantBomb, client);
+            g_hBombTimer = CreateTimer(g_cFreezeTime.FloatValue, PlantBomb, i);
         }
     }
 
     return Plugin_Continue;
 }
 
-public void OnRoundEnd(Event event, const char[] name, bool dontBroadcast)
+public void OnRoundEnd(Event eEvent, const char[] sName, bool bDontBroadcast)
 {
-    delete gh_bombPlantTimer;
+    delete g_hBombTimer;
 
     GameRules_SetProp("m_bBombPlanted", 0);
 }
 
-public Action PlantBomb(Handle timer, int client)
+public Action PlantBomb(Handle hTimer, int iClient)
 {
-    gh_bombPlantTimer = INVALID_HANDLE;
+    g_hBombTimer = INVALID_HANDLE;
 
-    if (IsClientInGame(client) || !gb_bombDel)
+    if (IsClientInGame(iClient) || !g_bBombDeleted)
     {
-        if (gb_bombDel)
+        if (g_bBombDeleted)
         {
-            int Bomb_Ent = CreateEntityByName("planted_c4");
+            int iBombEntity = CreateEntityByName("planted_c4");
 
             GameRules_SetProp("m_bBombPlanted", 1);
-            SetEntData(Bomb_Ent, m_bBombTicking, 1, 1, true);
 
-            SendBombPlanted(client);
+            SetEntData(iBombEntity, m_bBombTicking, 1, 1, true);
 
-            if (DispatchSpawn(Bomb_Ent))
+            SendBombPlanted(iClient);
+
+            if (DispatchSpawn(iBombEntity))
             {
-                ActivateEntity(Bomb_Ent);
-                TeleportEntity(Bomb_Ent, gf_bombPosition, NULL_VECTOR, NULL_VECTOR);
+                ActivateEntity(iBombEntity);
+                TeleportEntity(iBombEntity, g_fBombPosition, NULL_VECTOR, NULL_VECTOR);
             }
         }
     }
@@ -103,49 +104,49 @@ public Action PlantBomb(Handle timer, int client)
     }
 }
 
-public void SendBombPlanted(int client)
+public void SendBombPlanted(int iClient)
 {
-    Event event = CreateEvent("bomb_planted");
+    Event eEvent = CreateEvent("bomb_planted");
 
-    if (event == null)
+    if (eEvent == null)
     {
         return;
     }
 
-    event.SetInt("userid", GetClientUserId(client));
-    event.SetInt("site", view_as<int>(g_iBombsite));
-    event.Fire();
+    eEvent.SetInt("userid", GetClientUserId(iClient));
+    eEvent.SetInt("site", view_as<int>(g_iBombsite));
+    eEvent.Fire();
 }
 
-public void Retakes_OnSitePicked(Bombsite& site)
+public void Retakes_OnSitePicked(Bombsite& bSite)
 {
-    g_iBombsite = site;
+    g_iBombsite = bSite;
 }
 
-stock bool SafeRemoveWeapon(int client, int weapon)
+stock bool SafeRemoveWeapon(int iClient, int iWeapon)
 {
-    if (!IsValidEntity(weapon) || !IsValidEdict(weapon))
+    if (!IsValidEntity(iWeapon) || !IsValidEdict(iWeapon))
     {
         return false;
     }
 
-    if (!HasEntProp(weapon, Prop_Send, "m_hOwnerEntity"))
+    if (!HasEntProp(iWeapon, Prop_Send, "m_hOwnerEntity"))
     {
         return false;
     }
 
-    int iOwnerEntity = GetEntPropEnt(weapon, Prop_Send, "m_hOwnerEntity");
+    int iOwnerEntity = GetEntPropEnt(iWeapon, Prop_Send, "m_hOwnerEntity");
 
-    if (iOwnerEntity != client)
+    if (iOwnerEntity != iClient)
     {
-        SetEntPropEnt(weapon, Prop_Send, "m_hOwnerEntity", client);
+        SetEntPropEnt(iWeapon, Prop_Send, "m_hOwnerEntity", iClient);
     }
 
-    CS_DropWeapon(client, weapon, false);
+    CS_DropWeapon(iClient, iWeapon, false);
 
-    if (HasEntProp(weapon, Prop_Send, "m_hWeaponWorldModel"))
+    if (HasEntProp(iWeapon, Prop_Send, "m_hWeaponWorldModel"))
     {
-        int iWorldModel = GetEntPropEnt(weapon, Prop_Send, "m_hWeaponWorldModel");
+        int iWorldModel = GetEntPropEnt(iWeapon, Prop_Send, "m_hWeaponWorldModel");
 
         if (IsValidEdict(iWorldModel) && IsValidEntity(iWorldModel))
         {
@@ -156,7 +157,7 @@ stock bool SafeRemoveWeapon(int client, int weapon)
         }
     }
 
-    if (!AcceptEntityInput(weapon, "Kill"))
+    if (!AcceptEntityInput(iWeapon, "Kill"))
     {
         return false;
     }
