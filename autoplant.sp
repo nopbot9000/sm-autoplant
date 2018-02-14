@@ -95,6 +95,25 @@ public Action PlantBomb(Handle hTimer, int iClient)
             {
                 ActivateEntity(iBombEntity);
                 TeleportEntity(iBombEntity, g_fBombPosition, NULL_VECTOR, NULL_VECTOR);
+
+                if (!(GetEntityFlags(iBombEntity) & FL_ONGROUND))
+                {
+                    float fDirection[3];
+                    float fFloor[3];
+
+                    Handle hTrace = INVALID_HANDLE;
+
+                    fDirection[0] = 89.0;
+
+                    TR_TraceRay(g_fBombPosition, fDirection, MASK_PLAYERSOLID_BRUSHONLY, RayType_Infinite);
+
+                    if (TR_DidHit(hTrace))
+                    {
+                        TR_GetEndPosition(fFloor, hTrace);
+                    }
+
+                    TeleportEntity(iBombEntity, fFloor, NULL_VECTOR, NULL_VECTOR);
+                }
             }
         }
     }
