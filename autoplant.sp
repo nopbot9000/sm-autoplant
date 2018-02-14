@@ -101,7 +101,7 @@ public Action PlantBomb(Handle hTimer, int iClient)
                     float fDirection[3];
                     float fFloor[3];
 
-                    Handle hTrace = INVALID_HANDLE;
+                    Handle hTrace;
 
                     fDirection[0] = 89.0;
 
@@ -110,9 +110,9 @@ public Action PlantBomb(Handle hTimer, int iClient)
                     if (TR_DidHit(hTrace))
                     {
                         TR_GetEndPosition(fFloor, hTrace);
-                    }
 
-                    TeleportEntity(iBombEntity, fFloor, NULL_VECTOR, NULL_VECTOR);
+                        TeleportEntity(iBombEntity, fFloor, NULL_VECTOR, NULL_VECTOR);
+                    }
                 }
             }
         }
